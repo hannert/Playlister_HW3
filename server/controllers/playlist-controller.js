@@ -66,10 +66,17 @@ getPlaylistPairs = async (req, res) => {
         if (err) {
             return res.status(400).json({ success: false, error: err})
         }
+        if(playlists.length === 0) {
+            // Account for when the everything is empty, send back blank
+            console.log("everything is empty!")
+            return res
+                .status(200)
+                .json({success: true, idNamePairs: []})
+        }
         if (!playlists.length) {
             return res
                 .status(404)
-                .json({ success: false, error: 'Playlists not found'})
+                .json({ success: false, error: 'Playlist Pairs not found'})
         }
         else {
             // PUT ALL THE LISTS INTO ID, NAME PAIRS
@@ -86,10 +93,21 @@ getPlaylistPairs = async (req, res) => {
         }
     }).catch(err => console.log(err))
 }
+updatePlaylistById = async (req, res) => {
+    console.log("Updating playlist by ID")
+    await Playlist.updateOne({ _id: req.params.id},{$set: {playlist: req.params.playlist}}, (err, list) => {
+        if (err) {
+            return res.status(400).json({ success: false, error: err })
+        }
+
+        return res.status(200).json({ success: true, playlist: list })
+    }).catch(err => console.log(err))
+}
 
 module.exports = {
     createPlaylist,
     getPlaylists,
     getPlaylistPairs,
-    getPlaylistById
+    getPlaylistById,
+    updatePlaylistById
 }

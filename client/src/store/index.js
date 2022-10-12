@@ -1,6 +1,6 @@
-import { createContext, useState } from 'react'
-import jsTPS from '../common/jsTPS'
-import api from '../api'
+import { createContext, useState } from 'react';
+import api from '../api';
+import jsTPS from '../common/jsTPS';
 export const GlobalStoreContext = createContext({});
 /*
     This is our global data store. Note that it uses the Flux design pattern,
@@ -50,6 +50,7 @@ export const useGlobalStore = () => {
             }
             // STOP EDITING THE CURRENT LIST
             case GlobalStoreActionType.CLOSE_CURRENT_LIST: {
+                console.log("Closing list")
                 return setStore({
                     idNamePairs: store.idNamePairs,
                     currentList: null,
@@ -59,12 +60,13 @@ export const useGlobalStore = () => {
             }
             // CREATE A NEW LIST
             case GlobalStoreActionType.CREATE_NEW_LIST: {
+                console.log("Should update?")
                 return setStore({
                     idNamePairs: store.idNamePairs,
                     currentList: payload,
                     newListCounter: store.newListCounter + 1,
-                    listNameActive: false
-                })
+                    listNameActive: true
+                });
             }
             // GET ALL THE LISTS SO WE CAN PRESENT THEM
             case GlobalStoreActionType.LOAD_ID_NAME_PAIRS: {
@@ -110,15 +112,37 @@ export const useGlobalStore = () => {
     // DRIVE THE STATE OF THE APPLICATION. WE'LL CALL THESE IN 
     // RESPONSE TO EVENTS INSIDE OUR COMPONENTS.
 
+    // Adds a empty list
+    store.createNewList = function () {
+        async function asyncCreateNewPlaylist() {
+            const response = await api.createNewPlaylist();
+            if (response.data.success) {
+                let playlist = response.data.playlist;
+                storeReducer({
+                    type: GlobalStoreActionType.CREATE_NEW_LIST,
+                    payload: playlist
+                });
+                console.log("Successfully created a new playlist")
+                store.loadIdNamePairs();
+            }
+            else {
+                console.log("API FAILED TO CREATE NEW PLAYLIST");
+            }
+        }
+        asyncCreateNewPlaylist();
+    }
+
+
     // THIS FUNCTION PROCESSES CHANGING A LIST NAME
     store.changeListName = function (id, newName) {
         // GET THE LIST
         async function asyncChangeListName(id) {
             let response = await api.getPlaylistById(id);
             if (response.data.success) {
-                let playlist = response.data.playist;
+                let playlist = response.data.playlist;
                 playlist.name = newName;
                 async function updateList(playlist) {
+                    console.log(playlist)
                     response = await api.updatePlaylistById(playlist._id, playlist);
                     if (response.data.success) {
                         async function getListPairs(playlist) {
@@ -135,6 +159,9 @@ export const useGlobalStore = () => {
                             }
                         }
                         getListPairs(playlist);
+                    }
+                    else {
+                        console.log("API FAILED TO UPDATE LIST NAME")
                     }
                 }
                 updateList(playlist);
@@ -153,6 +180,7 @@ export const useGlobalStore = () => {
 
     // THIS FUNCTION LOADS ALL THE ID, NAME PAIRS SO WE CAN LIST ALL THE LISTS
     store.loadIdNamePairs = function () {
+        console.log("loadIdNamePairs")
         async function asyncLoadIdNamePairs() {
             const response = await api.getPlaylistPairs();
             if (response.data.success) {
@@ -197,7 +225,7 @@ export const useGlobalStore = () => {
     }
 
     // THIS FUNCTION ENABLES THE PROCESS OF EDITING A LIST NAME
-    store.setlistNameActive = function () {
+    store.setIsListNameEditActive = function () {
         storeReducer({
             type: GlobalStoreActionType.SET_LIST_NAME_EDIT_ACTIVE,
             payload: null

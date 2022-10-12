@@ -1,7 +1,7 @@
-import { useContext } from 'react'
-import { useHistory } from 'react-router-dom'
-import SongCard from './SongCard.js'
-import { GlobalStoreContext } from '../store'
+import { useContext } from 'react';
+import { useHistory } from 'react-router-dom';
+import { GlobalStoreContext } from '../store';
+import SongCard from './SongCard.js';
 /*
     This React component lets us edit a loaded list, which only
     happens when we are on the proper route.
@@ -15,7 +15,7 @@ function PlaylistCards() {
     return (
         <div id="playlist-cards">
         {
-            store.currentList.songs.map((song, index) => (
+            store.currentList?.songs.map((song, index) => (
                 <SongCard
                     id={'playlist-song-' + (index)}
                     key={'playlist-song-' + (index)}
