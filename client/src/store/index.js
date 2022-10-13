@@ -97,6 +97,7 @@ export const useGlobalStore = () => {
             }
             // START EDITING A LIST NAME
             case GlobalStoreActionType.SET_LIST_NAME_EDIT_ACTIVE: {
+                console.log("Starting editing...")
                 return setStore({
                     idNamePairs: store.idNamePairs,
                     currentList: payload,
@@ -142,8 +143,7 @@ export const useGlobalStore = () => {
                 let playlist = response.data.playlist;
                 playlist.name = newName;
                 async function updateList(playlist) {
-                    console.log(playlist)
-                    response = await api.updatePlaylistById(playlist._id, playlist);
+                    response = await api.updatePlaylistById(id, playlist);
                     if (response.data.success) {
                         async function getListPairs(playlist) {
                             response = await api.getPlaylistPairs();

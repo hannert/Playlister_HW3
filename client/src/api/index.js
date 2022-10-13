@@ -25,8 +25,7 @@ export const createNewPlaylist = () => api.post(`/playlist`, {'name': 'Untitled'
 export const getAllPlaylists = () => api.get(`/playlists`)
 export const getPlaylistPairs = () => api.get('playlistpairs')
 export const getPlaylistById = (id) => api.get(`/playlist/${id}`)
-export const updatePlaylistById = (id, playlist) => api.put(`/playlist/${id}`, playlist)
-
+export const updatePlaylistById = (id, payload) => api.put(`/playlist/${id}`, payload)
 
 const apis = {
     createNewPlaylist,

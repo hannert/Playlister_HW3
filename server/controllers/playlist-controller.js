@@ -40,6 +40,7 @@ createPlaylist = (req, res) => {
         })
 }
 getPlaylistById = async (req, res) => {
+    console.log("Getting playlist by ID")
     await Playlist.findOne({ _id: req.params.id }, (err, list) => {
         if (err) {
             return res.status(400).json({ success: false, error: err })
@@ -94,13 +95,12 @@ getPlaylistPairs = async (req, res) => {
     }).catch(err => console.log(err))
 }
 updatePlaylistById = async (req, res) => {
-    console.log("Updating playlist by ID")
-    await Playlist.updateOne({ _id: req.params.id},{$set: {playlist: req.params.playlist}}, (err, list) => {
+    await Playlist.updateOne({ _id: req.params.id},{$set: {name: req.body.name}}, (err, list) => {
         if (err) {
             return res.status(400).json({ success: false, error: err })
         }
 
-        return res.status(200).json({ success: true, playlist: list })
+        return res.status(200).json({ success: true})
     }).catch(err => console.log(err))
 }
 

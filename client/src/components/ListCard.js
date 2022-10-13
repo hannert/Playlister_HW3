@@ -1,6 +1,6 @@
-import { useContext, useState } from 'react'
-import { useHistory } from 'react-router-dom'
-import { GlobalStoreContext } from '../store'
+import { useContext, useState } from 'react';
+import { useHistory } from 'react-router-dom';
+import { GlobalStoreContext } from '../store';
 /*
     This is a card in our list of playlists. It lets select
     a list for editing and it has controls for changing its 
