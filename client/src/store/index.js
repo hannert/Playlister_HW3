@@ -1,4 +1,4 @@
-import { createContext, useState } from 'react';
+import { createContext, useEffect, useState } from 'react';
 import api from '../api';
 import jsTPS from '../common/jsTPS';
 export const GlobalStoreContext = createContext({});
@@ -18,6 +18,9 @@ export const GlobalStoreActionType = {
     LOAD_ID_NAME_PAIRS: "LOAD_ID_NAME_PAIRS",
     SET_CURRENT_LIST: "SET_CURRENT_LIST",
     SET_LIST_NAME_EDIT_ACTIVE: "SET_LIST_NAME_EDIT_ACTIVE",
+    MARK_LIST_FOR_DELETION: "MARK_LIST_FOR_DELETION",
+    HIDE_DELETE_LIST_MODAL: "HIDE_DELETE_LIST_MODAL",
+    DELETE_MARKED_LIST: "DELETE_MARKED_LIST"
 }
 
 // WE'LL NEED THIS TO PROCESS TRANSACTIONS
@@ -30,9 +33,25 @@ export const useGlobalStore = () => {
     const [store, setStore] = useState({
         idNamePairs: [],
         currentList: null,
+        recentlyAddedListId: '63489b42ad412d36589e0a06',
         newListCounter: 0,
-        listNameActive: false
+        listNameActive: false,
+        deleteListModalActive: false,
+        listMarkedForDeletion: null
     });
+
+    useEffect(() => {
+        if (!store.deleteListModalActive) {
+            store.hideDeleteListModal();
+            store.loadIdNamePairs();
+        }
+        console.log("Delete list changed----------------------------------")
+    }, [store.deleteListModalActive])
+
+    useEffect(() => {   
+        store.loadIdNamePairs();
+    }, [store.recentlyAddedListId])
+
 
     // HERE'S THE DATA STORE'S REDUCER, IT MUST
     // HANDLE EVERY TYPE OF STATE CHANGE
@@ -41,67 +60,91 @@ export const useGlobalStore = () => {
         switch (type) {
             // LIST UPDATE OF ITS NAME
             case GlobalStoreActionType.CHANGE_LIST_NAME: {
+                console.log("Changing list name")
                 return setStore({
+                    ...store,
                     idNamePairs: payload.idNamePairs,
                     currentList: payload.playlist,
-                    newListCounter: store.newListCounter,
-                    listNameActive: false
+                    recentlyAddedListId: 'Just emptied dawg',
+                    listNameActive: false,
                 });
             }
             // STOP EDITING THE CURRENT LIST
             case GlobalStoreActionType.CLOSE_CURRENT_LIST: {
                 console.log("Closing list")
                 return setStore({
-                    idNamePairs: store.idNamePairs,
+                    ...store,
                     currentList: null,
-                    newListCounter: store.newListCounter,
                     listNameActive: false
                 })
             }
             // CREATE A NEW LIST
             case GlobalStoreActionType.CREATE_NEW_LIST: {
-                console.log("Should update?")
+                console.log("Created a new list.")
+                console.log("With new iD of:",payload._id);
                 return setStore({
-                    idNamePairs: store.idNamePairs,
-                    currentList: payload,
+                    ...store,
+                    recentlyAddedListId: payload._id,
                     newListCounter: store.newListCounter + 1,
-                    listNameActive: true
+                    listNameActive: true,
+                    newId: 'awesome',
                 });
             }
             // GET ALL THE LISTS SO WE CAN PRESENT THEM
             case GlobalStoreActionType.LOAD_ID_NAME_PAIRS: {
+                console.log('load id name pairs ')
                 return setStore({
+                    ...store,
                     idNamePairs: payload,
                     currentList: null,
-                    newListCounter: store.newListCounter,
-                    listNameActive: false
                 });
             }
             // PREPARE TO DELETE A LIST
             case GlobalStoreActionType.MARK_LIST_FOR_DELETION: {
                 return setStore({
-                    idNamePairs: store.idNamePairs,
+                    ...store,
                     currentList: null,
-                    newListCounter: store.newListCounter,
-                    listNameActive: false
+                    listNameActive: false,
+                    deleteListModalActive: true,
+                    listMarkedForDeletion: payload
                 });
             }
+            // USER CANCELED DELETION OF LIST, HIDE THE MODAL
+            case GlobalStoreActionType.HIDE_DELETE_LIST_MODAL: {
+                return setStore({
+                    ...store,
+                    deleteListModalActive: false,
+                })
+            }
+
+
+            case GlobalStoreActionType.DELETE_MARKED_LIST: {
+                console.log("Delete")
+                return setStore({
+                    ...store,
+                    currentList: null,
+                    listNameActive: false,
+                    deleteListModalActive: false
+                });
+            }          
+            
+
             // UPDATE A LIST
             case GlobalStoreActionType.SET_CURRENT_LIST: {
+                console.log("Set current list")
                 return setStore({
-                    idNamePairs: store.idNamePairs,
+                    ...store,
                     currentList: payload,
-                    newListCounter: store.newListCounter,
                     listNameActive: false
                 });
             }
             // START EDITING A LIST NAME
             case GlobalStoreActionType.SET_LIST_NAME_EDIT_ACTIVE: {
                 console.log("Starting editing...")
+
                 return setStore({
-                    idNamePairs: store.idNamePairs,
+                    ...store,
                     currentList: payload,
-                    newListCounter: store.newListCounter,
                     listNameActive: true
                 });
             }
@@ -122,14 +165,14 @@ export const useGlobalStore = () => {
                 storeReducer({
                     type: GlobalStoreActionType.CREATE_NEW_LIST,
                     payload: playlist
-                });
+                })
                 console.log("Successfully created a new playlist")
-                store.loadIdNamePairs();
             }
             else {
                 console.log("API FAILED TO CREATE NEW PLAYLIST");
             }
         }
+        
         asyncCreateNewPlaylist();
     }
 
@@ -170,6 +213,51 @@ export const useGlobalStore = () => {
         asyncChangeListName(id);
     }
 
+
+
+    store.markListForDeletion = function(song){
+        // Should enable the delete list modal
+        console.log("marking for deletion in store")
+        storeReducer({
+            type: GlobalStoreActionType.MARK_LIST_FOR_DELETION,
+            payload: song
+        })
+    }
+
+    store.hideDeleteListModal = function() {
+        console.log("Hiding delete list modal in store ");
+        storeReducer({
+            type: GlobalStoreActionType.HIDE_DELETE_LIST_MODAL,
+            payload: {}
+        })
+    }
+
+
+    store.deleteMarkedList = function (id) {
+        console.log("Attempting to delete the marked list", id)
+        async function asyncDeleteMarkedList(id) {
+            const response = await api.deletePlaylistById(id);
+            console.log("What the fuck")
+            if (response.data.success) {
+                storeReducer({
+                    type: GlobalStoreActionType.DELETE_MARKED_LIST,
+                    payload: {}
+                })
+                // console.log("OPPAC 1 ---------------")
+                // await store.loadIdNamePairs();
+                // console.log("OPPAC 2 ---------------")
+                // await store.hideDeleteListModal();
+                // console.log("OPPAC 3 ---------------")
+                // console.log("Successfully deleted a playlist")
+            }
+            else {
+                console.log("API FAILED TO DELETE PLAYLIST");
+            }
+        }
+        
+        asyncDeleteMarkedList(id).then(console.log("Aweomse"));
+    }
+
     // THIS FUNCTION PROCESSES CLOSING THE CURRENTLY LOADED LIST
     store.closeCurrentList = function () {
         storeReducer({
@@ -189,6 +277,7 @@ export const useGlobalStore = () => {
                     type: GlobalStoreActionType.LOAD_ID_NAME_PAIRS,
                     payload: pairsArray
                 });
+                console.log("Successfully loaded idnamepairs")
             }
             else {
                 console.log("API FAILED TO GET THE LIST PAIRS");
@@ -217,6 +306,16 @@ export const useGlobalStore = () => {
     store.getPlaylistSize = function() {
         return store.currentList.songs.length;
     }
+    store.getRecentlyAddedListId = function () {
+        return store.recentlyAddedListId;
+    }
+    store.getCurrentCount = function () {
+        return store.newListCounter;
+    }
+    store.isDeleteListModalActive = function() {
+        return store.deleteListModalActive;
+    }
+
     store.undo = function () {
         tps.undoTransaction();
     }

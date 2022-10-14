@@ -1,4 +1,4 @@
-import { useContext, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import { GlobalStoreContext } from '../store';
 /*
@@ -11,8 +11,18 @@ import { GlobalStoreContext } from '../store';
 function ListCard(props) {
     const { store } = useContext(GlobalStoreContext);
     const [ editActive, setEditActive ] = useState(false);
-    const [ text, setText ] = useState("");
+    const [ text, setText ] = useState(props.idNamePair.name);
     store.history = useHistory();
+
+    useEffect(() => {
+        console.log("Initial render of", props.idNamePair._id)
+        if (store.recentlyAddedListId == props.idNamePair._id){
+            console.log("Current list is the one just created.");
+            toggleEdit();
+        }
+        
+    }, []);
+
     const { idNamePair, selected } = props;
 
     function handleLoadList(event) {
@@ -39,11 +49,18 @@ function ListCard(props) {
         setEditActive(newActive);
     }
 
+    function handleDelete(event) {
+        event.stopPropagation();
+        console.log("Tyring to delete in listCard");
+        store.markListForDeletion(idNamePair);
+    }
+
     function handleKeyPress(event) {
         if (event.code === "Enter") {
+            console.log(text)
             let id = event.target.id.substring("list-".length);
             store.changeListName(id, text);
-            toggleEdit();
+            toggleEdit();   
         }
     }
     function handleUpdateText(event) {
@@ -58,6 +75,9 @@ function ListCard(props) {
     if (store.isListNameEditActive) {
         cardStatus = true;
     }
+
+
+
     let cardElement =
         <div
             id={idNamePair._id}
@@ -75,6 +95,7 @@ function ListCard(props) {
                 type="button"
                 id={"delete-list-" + idNamePair._id}
                 className="list-card-button"
+                onClick={handleDelete}
                 value={"\u2715"}
             />
             <input

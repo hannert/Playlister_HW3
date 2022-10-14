@@ -1,6 +1,7 @@
 import React, { useContext, useEffect } from 'react'
 import { useHistory } from 'react-router-dom'
 import { GlobalStoreContext } from '../store'
+import DeleteListModal from './DeleteListModal'
 import ListCard from './ListCard.js'
 /*
     This React component lists all the playlists in the UI.
@@ -13,10 +14,11 @@ const ListSelector = () => {
 
     useEffect(() => {
         store.loadIdNamePairs();
-    }, []);
+    }, []); // Adding an empty array in the second argument only does this after the initial render 
 
     function handleCreateNewList() {
         store.createNewList();
+        console.log(store.getCurrentCount());
     }
     let listCard = "";
     if (store) {
@@ -30,6 +32,7 @@ const ListSelector = () => {
     }
     return (
         <div id="playlist-selector">
+            <DeleteListModal />
             <div id="list-selector-list">
             <div id="playlist-selector-heading">
                 <input
