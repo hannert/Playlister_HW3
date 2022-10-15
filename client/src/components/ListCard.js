@@ -16,12 +16,17 @@ function ListCard(props) {
 
     useEffect(() => {
         console.log("Initial render of", props.idNamePair._id)
-        if (store.recentlyAddedListId == props.idNamePair._id){
+        if (store.recentlyAddedListId === props.idNamePair._id){
             console.log("Current list is the one just created.");
             toggleEdit();
+        } else {
+            if( editActive ){
+                setEditActive(!editActive)
+            }
         }
+
         
-    }, []);
+    }, [store.recentlyAddedListId]);
 
     const { idNamePair, selected } = props;
 

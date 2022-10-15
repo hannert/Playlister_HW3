@@ -30,7 +30,7 @@ function DeleteListModal(props) {
             className={modalClass} 
             id="delete-list-modal" 
             data-animation="slideInOutLeft">
-                <div className="modal-root" id='verify-delete-list-root'>
+                <div className="modal-dialog" id='verify-delete-list-root'>
                     <div className="modal-north">
                         Delete playlist?
                     </div>

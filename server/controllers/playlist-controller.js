@@ -95,6 +95,7 @@ getPlaylistPairs = async (req, res) => {
     }).catch(err => console.log(err))
 }
 updatePlaylistById = async (req, res) => {
+    console.log("Updating playlist by ID")
     await Playlist.updateOne({ _id: req.params.id},{$set: {name: req.body.name}}, (err, list) => {
         if (err) {
             return res.status(400).json({ success: false, error: err })
@@ -113,6 +114,20 @@ deletePlaylistById = async (req, res) => {
     }).catch(err => console.log(err))
 }
 
+// --- Song Section
+addSongToPlaylist = (req, res) => {
+    console.log("API---------------------")
+    console.log("Hi", req.body)
+    Playlist.findOneAndUpdate({ _id: req.params.id}, {$addToSet: {songs: req.body}}, (err, success) => {
+        console.log("Awesome") 
+        if (err) {
+            return res.status(400).json({ success: false, error: err })
+        }
+
+        return res.status(200).json({ success: true, dbug: success})
+    }).catch(err => console.log(err))
+}
+
 module.exports = {
     createPlaylist,
     getPlaylists,
@@ -120,4 +135,5 @@ module.exports = {
     getPlaylistById,
     updatePlaylistById,
     deletePlaylistById,
+    addSongToPlaylist,
 }

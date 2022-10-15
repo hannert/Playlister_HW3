@@ -1,6 +1,6 @@
-import { useContext } from 'react'
-import { GlobalStoreContext } from '../store'
-import { useHistory } from 'react-router-dom'
+import { useContext } from 'react';
+import { useHistory } from 'react-router-dom';
+import { GlobalStoreContext } from '../store';
 /*
     This toolbar is a functional React component that
     manages the undo/redo/close buttons.
@@ -23,6 +23,12 @@ function EditToolbar() {
         history.push("/");
         store.closeCurrentList();
     }
+
+    function handleAddSong() {
+        console.log("EditToolbar clicked")
+        store.addSongToPlaylist();
+    }
+
     let editStatus = false;
     if (store.isListNameEditActive) {
         editStatus = true;
@@ -35,6 +41,7 @@ function EditToolbar() {
                 disabled={editStatus}
                 value="+"
                 className={enabledButtonClass}
+                onClick={handleAddSong}
             />
             <input
                 type="button"

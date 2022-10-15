@@ -20,7 +20,10 @@ export const GlobalStoreActionType = {
     SET_LIST_NAME_EDIT_ACTIVE: "SET_LIST_NAME_EDIT_ACTIVE",
     MARK_LIST_FOR_DELETION: "MARK_LIST_FOR_DELETION",
     HIDE_DELETE_LIST_MODAL: "HIDE_DELETE_LIST_MODAL",
-    DELETE_MARKED_LIST: "DELETE_MARKED_LIST"
+    DELETE_MARKED_LIST: "DELETE_MARKED_LIST",
+    ADD_SONG: "ADD_SONG",
+    UPDATE_SONG_BY_ID: "UPDATE_SONG_BY_ID",
+    REMOVE_SONG_BY_ID: "REMOVE_SONG_BY_ID"
 }
 
 // WE'LL NEED THIS TO PROCESS TRANSACTIONS
@@ -33,11 +36,12 @@ export const useGlobalStore = () => {
     const [store, setStore] = useState({
         idNamePairs: [],
         currentList: null,
-        recentlyAddedListId: '63489b42ad412d36589e0a06',
+        recentlyAddedListId: '',
+        recentlyAddedSongId: '',
         newListCounter: 0,
         listNameActive: false,
         deleteListModalActive: false,
-        listMarkedForDeletion: null
+        listMarkedForDeletion: null,
     });
 
     useEffect(() => {
@@ -51,6 +55,7 @@ export const useGlobalStore = () => {
     useEffect(() => {   
         store.loadIdNamePairs();
     }, [store.recentlyAddedListId])
+
 
 
     // HERE'S THE DATA STORE'S REDUCER, IT MUST
@@ -148,6 +153,16 @@ export const useGlobalStore = () => {
                     listNameActive: true
                 });
             }
+
+            // ADDING A SONG
+            case GlobalStoreActionType.ADD_SONG: {
+                console.log("Addign song...")
+                store.refreshCurrentPlaylist();
+                return setStore({
+                    ...store,
+                    currentList: payload
+                });
+            }
             default:
                 return store;
         }
@@ -243,12 +258,6 @@ export const useGlobalStore = () => {
                     type: GlobalStoreActionType.DELETE_MARKED_LIST,
                     payload: {}
                 })
-                // console.log("OPPAC 1 ---------------")
-                // await store.loadIdNamePairs();
-                // console.log("OPPAC 2 ---------------")
-                // await store.hideDeleteListModal();
-                // console.log("OPPAC 3 ---------------")
-                // console.log("Successfully deleted a playlist")
             }
             else {
                 console.log("API FAILED TO DELETE PLAYLIST");
@@ -303,6 +312,32 @@ export const useGlobalStore = () => {
         }
         asyncSetCurrentList(id);
     }
+
+    store.addSongToPlaylist = function () {
+        console.log("Trying to add song in store...")
+        async function asyncAddSongToPlaylist(id) {
+            let response = await api.addSongToPlaylist(id);
+            store.setCurrentList(id);
+            if (response.data.success) {
+                console.log("successfully added", response.data.dbug)
+                storeReducer({
+                    type: GlobalStoreActionType.ADD_SONG,
+                    payload: response.data.dbug
+                });
+            }
+        }
+        console.log(store.currentList._id)
+        asyncAddSongToPlaylist(store.currentList._id);
+    }
+
+    store.refreshCurrentPlaylist = function () {
+        console.log("Refreshing current playlist...")
+        async function asyncRefreshCurrentList(id) {
+            await api.getPlaylistById(id);
+        }
+        asyncRefreshCurrentList(store.currentList?._id);
+    }
+
     store.getPlaylistSize = function() {
         return store.currentList.songs.length;
     }
