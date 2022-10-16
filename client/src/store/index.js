@@ -497,6 +497,52 @@ export const useGlobalStore = () => {
         asyncDeleteMarkedSong(store.currentList?._id, store.deleteSongIndex)
     }
 
+    store.moveSong = function(start, end) {
+        async function asyncMoveSong(start, end, listId) {
+            console.log( listId)
+            let response = await api.getPlaylistById(listId);
+            if (response.data.success) {
+                console.log("successfully found playlist")
+                let playlist = response.data.playlist;
+                let songs = playlist.songs;
+
+                start -= 1;
+                end -= 1;
+
+                if (start < end) {
+                    let temp = songs[start];
+                    for (let i = start; i < end; i++) {
+                        songs[i] = songs[i + 1];
+                    }
+                    songs[end] = temp;
+                }
+                else if (start > end) {
+                    let temp = songs[start];
+                    for (let i = start; i > end; i--) {
+                        songs[i] = songs[i - 1];
+                    }
+                    songs[end] = temp;
+                }
+
+                console.log("updated songs list", songs)
+                async function updateList(playlist) {
+                    console.log(playlist)
+                    response = await api.updatePlaylistById(listId, playlist);
+                    store.refreshCurrentPlaylist();
+                    if (response.data.success) {
+                        storeReducer({
+                            type: GlobalStoreActionType.UPDATE_SONG,
+                            payload: {}
+                        });
+                    }
+                }
+                updateList(playlist);
+            }
+
+        }
+        asyncMoveSong(start, end, store.currentList?._id)
+    }
+
     store.refreshCurrentPlaylist = function () {
         console.log("Refreshing current playlist...")
         async function asyncRefreshCurrentList(id) {
