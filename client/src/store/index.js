@@ -23,7 +23,9 @@ export const GlobalStoreActionType = {
     DELETE_MARKED_LIST: "DELETE_MARKED_LIST",
     ADD_SONG: "ADD_SONG",
     UPDATE_SONG_BY_ID: "UPDATE_SONG_BY_ID",
-    REMOVE_SONG_BY_ID: "REMOVE_SONG_BY_ID"
+    REMOVE_SONG_BY_ID: "REMOVE_SONG_BY_ID",
+    MARK_SONG_FOR_EDIT: "MARK_SONG_FOR_EDIT",
+    HIDE_EDIT_SONG_MODAL: "HIDE_EDIT_SONG_MODAL"
 }
 
 // WE'LL NEED THIS TO PROCESS TRANSACTIONS
@@ -42,21 +44,32 @@ export const useGlobalStore = () => {
         listNameActive: false,
         deleteListModalActive: false,
         listMarkedForDeletion: null,
+        editSongModalActive: false,
+        editSongIndex: null,
+        editSongId: null
     });
 
     useEffect(() => {
         if (!store.deleteListModalActive) {
+            console.log("Awesome")
             store.hideDeleteListModal();
             store.loadIdNamePairs();
         }
         console.log("Delete list changed----------------------------------")
     }, [store.deleteListModalActive])
 
-    useEffect(() => {   
-        store.loadIdNamePairs();
-    }, [store.recentlyAddedListId])
+    // useEffect(() => {   
+    //     console.log("--------- UseEffect triggers ---------")
+    //     store.loadIdNamePairs();
+    // }, [store.recentlyAddedListId])
 
-
+    useEffect(() => {
+        console.log("Useeffect, edit song modal off")
+        if (!store.editSongModalActive && store.currentList?._id) {
+            store.hideEditSongModal();
+            store.setCurrentList(store.currentList?._id);
+        }
+    }, [store.editSongModalActive])
 
     // HERE'S THE DATA STORE'S REDUCER, IT MUST
     // HANDLE EVERY TYPE OF STATE CHANGE
@@ -163,11 +176,39 @@ export const useGlobalStore = () => {
                     currentList: payload
                 });
             }
+
+            // Section for editing a song
+            case GlobalStoreActionType.MARK_SONG_FOR_EDIT: {
+                console.log("Marking song for edit...")
+                return setStore({
+                    ...store,
+                    editSongModalActive: true,
+                    editSongIndex: payload
+                })
+            }
+            case GlobalStoreActionType.HIDE_EDIT_SONG_MODAL: {
+                console.log("Hiding edit song modal in reducer")
+                return setStore({
+                    ...store,
+                    editSongModalActive: false,
+                    editSongIndex: null
+                })
+            }
+            case GlobalStoreActionType.EDIT_MARKED_SONG: {
+                console.log("Editing song in reducer")
+                return setStore({
+                    ...store,
+                    editSongModalActive: false,
+                    editSongIndex: null
+                })
+            }
+
+
             default:
                 return store;
         }
     }
-    // THESE ARE THE FUNCTIONS THAT WILL UPDATE OUR STORE AND
+     // THESE ARE THE FUNCTIONS THAT WILL UPDATE OUR STORE AND
     // DRIVE THE STATE OF THE APPLICATION. WE'LL CALL THESE IN 
     // RESPONSE TO EVENTS INSIDE OUR COMPONENTS.
 
@@ -175,6 +216,7 @@ export const useGlobalStore = () => {
     store.createNewList = function () {
         async function asyncCreateNewPlaylist() {
             const response = await api.createNewPlaylist();
+            store.loadIdNamePairs();
             if (response.data.success) {
                 let playlist = response.data.playlist;
                 storeReducer({
@@ -191,7 +233,6 @@ export const useGlobalStore = () => {
         asyncCreateNewPlaylist();
     }
 
-
     // THIS FUNCTION PROCESSES CHANGING A LIST NAME
     store.changeListName = function (id, newName) {
         // GET THE LIST
@@ -201,6 +242,7 @@ export const useGlobalStore = () => {
                 let playlist = response.data.playlist;
                 playlist.name = newName;
                 async function updateList(playlist) {
+                    console.log(playlist)
                     response = await api.updatePlaylistById(id, playlist);
                     if (response.data.success) {
                         async function getListPairs(playlist) {
@@ -330,10 +372,74 @@ export const useGlobalStore = () => {
         asyncAddSongToPlaylist(store.currentList._id);
     }
 
+    store.markSongForEdit = function (index) {
+        console.log("Markiing song for edit")
+        storeReducer({
+            type: GlobalStoreActionType.MARK_SONG_FOR_EDIT,
+            payload: index
+        });
+
+    }
+
+    store.hideEditSongModal = function() {
+        console.log("Hiding edit song modal in store ");
+        storeReducer({
+            type: GlobalStoreActionType.HIDE_EDIT_SONG_MODAL,
+            payload: {}
+        })
+    }
+    store.updateMarkedSong = function (payload) {
+        async function asyncUpdateMarkedSong(id, payload) {
+            console.log(payload, store.currentList._id)
+            let response = await api.getPlaylistById(id);
+            // store.hideEditSongModal(); // Hide modal once we hit confirm
+            if (response.data.success) {
+                console.log("successfully found playlist", response.data.dbug)
+                let playlist = response.data.playlist;
+                playlist.songs[store.editSongIndex] = payload;
+                async function updateList(playlist) {
+                    console.log(playlist)
+                    response = await api.updatePlaylistById(id, playlist);
+                    store.refreshCurrentPlaylist();
+                    if (response.data.success) {
+                        storeReducer({
+                            type: GlobalStoreActionType.UPDATE_SONG,
+                            payload: {}
+                        });
+                        // async function getListPairs() {
+                        //     response = await api.getPlaylistPairs();
+                        //     if (response.data.success) {
+                        //         storeReducer({
+                        //             type: GlobalStoreActionType.UPDATE_SONG,
+                        //             payload: {}
+                        //         });
+                        //     }
+                        // }
+                        // getListPairs();
+                    }
+                }
+                updateList(playlist);
+            }
+
+        }
+        asyncUpdateMarkedSong(store.currentList?._id, payload)
+    }
+
+
     store.refreshCurrentPlaylist = function () {
         console.log("Refreshing current playlist...")
         async function asyncRefreshCurrentList(id) {
-            await api.getPlaylistById(id);
+            let response = await api.getPlaylistById(id);
+            if (response.data.success) {
+                let playlist = response.data.playlist;
+
+                if (response.data.success) {
+                    storeReducer({
+                        type: GlobalStoreActionType.SET_CURRENT_LIST,
+                        payload: playlist
+                    });
+                }
+            }        
         }
         asyncRefreshCurrentList(store.currentList?._id);
     }
@@ -349,6 +455,9 @@ export const useGlobalStore = () => {
     }
     store.isDeleteListModalActive = function() {
         return store.deleteListModalActive;
+    }
+    store.isEditSongModalActive = function() {
+        return store.editSongModalActive;
     }
 
     store.undo = function () {

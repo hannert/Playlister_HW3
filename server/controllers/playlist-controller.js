@@ -95,8 +95,8 @@ getPlaylistPairs = async (req, res) => {
     }).catch(err => console.log(err))
 }
 updatePlaylistById = async (req, res) => {
-    console.log("Updating playlist by ID")
-    await Playlist.updateOne({ _id: req.params.id},{$set: {name: req.body.name}}, (err, list) => {
+    console.log("Updating playlist by ID", req.body)
+    await Playlist.findOneAndReplace({ _id: req.params.id}, req.body, null, (err, list) => {
         if (err) {
             return res.status(400).json({ success: false, error: err })
         }
