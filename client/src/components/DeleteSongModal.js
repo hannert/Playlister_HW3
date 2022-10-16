@@ -21,10 +21,10 @@ function DeleteSongModal(props) {
     if(store.isDeleteSongModalActive()){
         modalClass += " is-visible"
     }
-    let songToDelete = "Something went wrong.."
-    // if(store.songMarkedForDeletion !== null){
-    //     songToDelete = store.currentList?.songs[store.songMarkedForDeletion].title
-    // }
+    let songToDelete = "[REDACTED]"
+    if(store.songMarkedForDeletion){
+        songToDelete = store.songMarkedForDeletion.title
+    }
     return (
         <div 
             className={modalClass} 

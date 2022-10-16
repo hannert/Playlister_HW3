@@ -19,7 +19,7 @@ function SongCard(props) {
         event.stopPropagation();
 
         console.log("Handle delete")
-        store.markSongForDeletion(index)
+        store.markSongForDeletion(index, song)
     }
 
     let cardClass = "list-card unselected-list-card";

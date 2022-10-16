@@ -50,6 +50,7 @@ export const useGlobalStore = () => {
         editSongModalActive: false,
         editSongIndex: null,
         editSongId: null,
+        deleteSongIndex: null,
         songMarkedForDeletion: null,
         deleteSongModalActive: false,
     });
@@ -222,13 +223,15 @@ export const useGlobalStore = () => {
                 return setStore({
                     ...store,
                     deleteSongModalActive: true,
-                    songMarkedForDeletion: payload
+                    deleteSongIndex: payload.index,
+                    songMarkedForDeletion: payload.song
                 })
             }
             case GlobalStoreActionType.HIDE_DELETE_SONG_MODAL: {
                 return setStore({
                     ...store,
                     deleteSongModalActive: false,
+                    deleteSongIndex: null,
                     songMarkedForDeletion: null
                 })
             }
@@ -236,6 +239,7 @@ export const useGlobalStore = () => {
                 return setStore({
                     ...store,
                     deleteSongModalActive: false,
+                    deleteSongIndex: null,
                     songMarkedForDeletion: null
                 })
             }
@@ -452,12 +456,12 @@ export const useGlobalStore = () => {
         asyncUpdateMarkedSong(store.currentList?._id, payload)
     }
 
-    store.markSongForDeletion = function(index){
+    store.markSongForDeletion = function(index, song){
         // Should enable the delete list modal
         console.log("marking for SONG deletion in store", index)
         storeReducer({
             type: GlobalStoreActionType.MARK_SONG_FOR_DELETION,
-            payload: index
+            payload: {'index': index, 'song': song}
         })
     }
 
@@ -490,7 +494,7 @@ export const useGlobalStore = () => {
             }
 
         }
-        asyncDeleteMarkedSong(store.currentList?._id, store.songMarkedForDeletion)
+        asyncDeleteMarkedSong(store.currentList?._id, store.deleteSongIndex)
     }
 
     store.refreshCurrentPlaylist = function () {
