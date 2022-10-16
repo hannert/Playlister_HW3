@@ -25,7 +25,10 @@ export const GlobalStoreActionType = {
     UPDATE_SONG_BY_ID: "UPDATE_SONG_BY_ID",
     REMOVE_SONG_BY_ID: "REMOVE_SONG_BY_ID",
     MARK_SONG_FOR_EDIT: "MARK_SONG_FOR_EDIT",
-    HIDE_EDIT_SONG_MODAL: "HIDE_EDIT_SONG_MODAL"
+    HIDE_EDIT_SONG_MODAL: "HIDE_EDIT_SONG_MODAL",
+    MARK_SONG_FOR_DELETION: "MARK_SONG_FOR_DELETION",
+    HIDE_DELETE_SONG_MODAL: "HIDE_DELETE_SONG_MODAL",
+    DELETE_MARKED_SONG: "DELETE_MARKED_SONG"
 }
 
 // WE'LL NEED THIS TO PROCESS TRANSACTIONS
@@ -46,7 +49,9 @@ export const useGlobalStore = () => {
         listMarkedForDeletion: null,
         editSongModalActive: false,
         editSongIndex: null,
-        editSongId: null
+        editSongId: null,
+        songMarkedForDeletion: null,
+        deleteSongModalActive: false,
     });
 
     useEffect(() => {
@@ -70,6 +75,15 @@ export const useGlobalStore = () => {
             store.setCurrentList(store.currentList?._id);
         }
     }, [store.editSongModalActive])
+
+    useEffect(() => {
+        console.log("Useeffect, delete song modal off")
+        if (!store.deleteSongModalActive && store.currentList?._id) {
+            store.hideDeleteSongModal();
+            store.setCurrentList(store.currentList?._id);
+        }
+    }, [store.deleteSongModalActive])
+
 
     // HERE'S THE DATA STORE'S REDUCER, IT MUST
     // HANDLE EVERY TYPE OF STATE CHANGE
@@ -200,6 +214,29 @@ export const useGlobalStore = () => {
                     ...store,
                     editSongModalActive: false,
                     editSongIndex: null
+                })
+            }
+
+            case GlobalStoreActionType.MARK_SONG_FOR_DELETION: {
+                console.log("Marking song for deletion", payload)
+                return setStore({
+                    ...store,
+                    deleteSongModalActive: true,
+                    songMarkedForDeletion: payload
+                })
+            }
+            case GlobalStoreActionType.HIDE_DELETE_SONG_MODAL: {
+                return setStore({
+                    ...store,
+                    deleteSongModalActive: false,
+                    songMarkedForDeletion: null
+                })
+            }
+            case GlobalStoreActionType.DELETE_MARKED_SONG: {
+                return setStore({
+                    ...store,
+                    deleteSongModalActive: false,
+                    songMarkedForDeletion: null
                 })
             }
 
@@ -406,16 +443,6 @@ export const useGlobalStore = () => {
                             type: GlobalStoreActionType.UPDATE_SONG,
                             payload: {}
                         });
-                        // async function getListPairs() {
-                        //     response = await api.getPlaylistPairs();
-                        //     if (response.data.success) {
-                        //         storeReducer({
-                        //             type: GlobalStoreActionType.UPDATE_SONG,
-                        //             payload: {}
-                        //         });
-                        //     }
-                        // }
-                        // getListPairs();
                     }
                 }
                 updateList(playlist);
@@ -425,6 +452,46 @@ export const useGlobalStore = () => {
         asyncUpdateMarkedSong(store.currentList?._id, payload)
     }
 
+    store.markSongForDeletion = function(index){
+        // Should enable the delete list modal
+        console.log("marking for SONG deletion in store", index)
+        storeReducer({
+            type: GlobalStoreActionType.MARK_SONG_FOR_DELETION,
+            payload: index
+        })
+    }
+
+    store.hideDeleteSongModal = function() {
+        console.log("Hiding delete song modal in store ");
+        storeReducer({
+            type: GlobalStoreActionType.HIDE_DELETE_SONG_MODAL,
+            payload: {}
+        })
+    }
+
+
+    store.deleteMarkedSong = function (index) {
+        async function asyncDeleteMarkedSong(id, index) {
+            let response = await api.getPlaylistById(id, index)
+            if (response.data.success) {
+                let playlist = response.data.playlist;
+                playlist.songs.splice(index, 1);
+                async function updateList(playlist) {
+                    response = await api.updatePlaylistById(id, playlist);
+                    store.refreshCurrentPlaylist();
+                    if (response.data.success) {
+                        storeReducer({
+                            type: GlobalStoreActionType.DELETE_MARKED_SONG,
+                            payload: {}
+                        });
+                    }
+                }
+                updateList(playlist);
+            }
+
+        }
+        asyncDeleteMarkedSong(store.currentList?._id, store.songMarkedForDeletion)
+    }
 
     store.refreshCurrentPlaylist = function () {
         console.log("Refreshing current playlist...")
@@ -459,7 +526,9 @@ export const useGlobalStore = () => {
     store.isEditSongModalActive = function() {
         return store.editSongModalActive;
     }
-
+    store.isDeleteSongModalActive = function() {
+        return store.deleteSongModalActive;
+    }
     store.undo = function () {
         tps.undoTransaction();
     }

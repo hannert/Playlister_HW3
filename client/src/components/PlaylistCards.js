@@ -1,6 +1,7 @@
 import { useContext } from 'react';
 import { useHistory } from 'react-router-dom';
 import { GlobalStoreContext } from '../store';
+import DeleteSongModal from './DeleteSongModal';
 import EditSongModal from './EditSongModal.js';
 import SongCard from './SongCard.js';
 
@@ -17,6 +18,7 @@ function PlaylistCards() {
     return (
         <div id="playlist-cards">
             <EditSongModal />
+            <DeleteSongModal />
         {
             store.currentList?.songs.map((song, index) => (
                 <SongCard

@@ -1,5 +1,6 @@
 import Banner from './Banner'
 import DeleteListModal from './DeleteListModal'
+import DeleteSongModal from './DeleteSongModal'
 import EditSongModal from './EditSongModal'
 import EditToolbar from './EditToolbar'
 import ListCard from './ListCard'
@@ -23,4 +24,5 @@ export {
     PlaylistCards,
     DeleteListModal,
     EditSongModal,
+    DeleteSongModal,
 }

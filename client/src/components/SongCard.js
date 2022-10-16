@@ -11,8 +11,15 @@ function SongCard(props) {
         event.stopPropagation();
 
         console.log("Trying to open edit modal...at index", index)
-        store.markSongForEdit(index)
+        store.markSongForEdit(index, song.title)
 
+    }
+
+    function handleDelete(event) {
+        event.stopPropagation();
+
+        console.log("Handle delete")
+        store.markSongForDeletion(index)
     }
 
     let cardClass = "list-card unselected-list-card";
@@ -35,6 +42,7 @@ function SongCard(props) {
                 id={"remove-song-" + index}
                 className="list-card-button"
                 value={"\u2715"}
+                onClick={handleDelete}
             />
         </div>
     );
