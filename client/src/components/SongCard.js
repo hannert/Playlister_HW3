@@ -55,7 +55,7 @@ function SongCard(props) {
                 draggedTo: false
             })
 
-            store.moveSong(sourceId, targetId);
+            store.addMoveSongTransaction(sourceId, targetId);
 
         }
         else {

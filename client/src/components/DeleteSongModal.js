@@ -10,10 +10,18 @@ function DeleteSongModal(props) {
 
     function handleConfirm(event) {
         event.stopPropagation();
-        store.deleteMarkedSong(store.songMarkedForDeletion._id);
+        console.log(store.deleteSongIndex, 
+            store.songMarkedForDeletion, 
+            store.currentSongLength)
+        store.addDeleteSongTransaction(
+            store.deleteSongIndex, 
+            store.songMarkedForDeletion, 
+            store.currentSongLength
+        );
     }
     function handleCancel(event) {
         event.stopPropagation();
+
         store.hideDeleteSongModal();
     }
 
@@ -36,7 +44,7 @@ function DeleteSongModal(props) {
                     </div>
                     <div className="modal-center">
                         <div className="modal-center-content">
-                            Are you sure you wish to permanently delete the {songToDelete} playlist?
+                            Are you sure you wish to permanently remove {songToDelete} from the playlist?
                         </div>
                     </div>
                     <div className="modal-south">

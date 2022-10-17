@@ -25,8 +25,8 @@ function EditToolbar() {
     }
 
     function handleAddSong() {
-        console.log("EditToolbar clicked")
-        store.addSongToPlaylist();
+        console.log("EditToolbar clicked", store.currentList?.songs.length)
+        store.addAddSongTransaction(store.currentList?.songs.length);
     }
 
     let editStatus = false;

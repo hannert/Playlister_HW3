@@ -15,7 +15,7 @@ function ListCard(props) {
     store.history = useHistory();
 
     useEffect(() => {
-        console.log("Initial render of", props.idNamePair._id)
+        console.log("Initial render of", props.idNamePair._id, store.recentlyAddedListId)
         if (store.recentlyAddedListId === props.idNamePair._id){
             console.log("Current list is the one just created.");
             toggleEdit();
