@@ -4,6 +4,12 @@ import { GlobalStoreContext } from '../store';
 function EditSongModal(){
     const { store } = useContext(GlobalStoreContext);
 
+    const [initDetails, setInitDetails] = useState({
+        'title': "",
+        'artist': "",
+        'youTubeId': ""
+    })
+
     const [title, setTitle] = useState("Initial Title")
     const [artist, setArtist] = useState("Initial Artist")
     const [youTubeId, setYouTubeId] = useState("Initial ID")
@@ -13,16 +19,21 @@ function EditSongModal(){
             setTitle(store.currentList.songs[store.editSongIndex].title);
             setArtist(store.currentList.songs[store.editSongIndex].artist);
             setYouTubeId(store.currentList.songs[store.editSongIndex].youTubeId);
+            setInitDetails({
+                'title': store.currentList.songs[store.editSongIndex].title,
+                'artist': store.currentList.songs[store.editSongIndex].artist,
+                'youTubeId': store.currentList.songs[store.editSongIndex].youTubeId
+            });
         }
     }, [store.editSongModalActive])
 
-    function handleTitleChange(event) {
-        event.preventDefault();
-    }
+
 
     function handleConfirm(event){
         event.preventDefault();
-        store.updateMarkedSong({title, artist, youTubeId});
+        // store.updateMarkedSong({title, artist, youTubeId});
+        console.log(store.editSongIndex, initDetails, {title, artist, youTubeId})
+        store.addEditSongTransaction(store.editSongIndex, initDetails, {title, artist, youTubeId})
     }
 
     function handleCancel(event) {

@@ -3,6 +3,7 @@ import api from '../api';
 import jsTPS from '../common/jsTPS';
 import AddSong_Transaction from '../transactions/AddSong_Transaction';
 import DeleteSong_Transaction from '../transactions/DeleteSong_Transaction';
+import EditSong_Transaction from '../transactions/EditSong_Transaction';
 import MoveSong_Transaction from '../transactions/MoveSong_Transaction.js';
 export const GlobalStoreContext = createContext({});
 /*
@@ -54,6 +55,7 @@ export const useGlobalStore = () => {
         editSongModalActive: false,
         editSongIndex: null,
         editSongId: null,
+        successfulEdit: false,
         deleteSongIndex: null,
         songMarkedForDeletion: null,
         deleteSongModalActive: false,
@@ -63,10 +65,7 @@ export const useGlobalStore = () => {
         store.loadIdNamePairs();
     }, [store.recentlyAddedListId])
 
-    useEffect(() => {
-        if(store.currentList)
-            store.setCurrentList(store.currentList?._id)
-    }, [store.editSongIndex])
+
 
 
 
@@ -156,7 +155,8 @@ export const useGlobalStore = () => {
                     currentList: payload.list,
                     currentSongLength: payload.length - 1,
                     listNameActive: false,
-                    deleteSongModalActive: false
+                    deleteSongModalActive: false,
+                    editSongModalActive: false
                 });
             }
             // START EDITING A LIST NAME
@@ -193,15 +193,16 @@ export const useGlobalStore = () => {
                 return setStore({
                     ...store,
                     editSongModalActive: false,
-                    editSongIndex: null
+                    editSongIndex: 'hiding'
                 })
             }
             case GlobalStoreActionType.EDIT_MARKED_SONG: {
-                console.log("Editing song in reducer")
+                console.log("Editing song in reducer", store.successfulEdit)
                 return setStore({
                     ...store,
                     editSongModalActive: false,
-                    editSongIndex: null
+                    editSongIndex: "whaat",
+                    successfulEdit: !store.successfulEdit,
                 })
             }
 
@@ -422,19 +423,18 @@ export const useGlobalStore = () => {
     }
 
     store.updateMarkedSong = function (payload, index = null) {
+        console.log('markedonsg', payload)
         async function asyncUpdateMarkedSong(id, payload, index) {
             console.log(payload, store.currentList._id)
             let response = await api.getPlaylistById(id, index);
             if (response.data.success) {
-                console.log("successfully found playlist", response.data.dbug)
                 let playlist = response.data.playlist;
                 playlist.songs[index] = payload;
                 async function updateList(playlist) {
                     console.log(playlist)
                     response = await api.updatePlaylistById(id, playlist);
-                    // store.setCurrentList(store.currentList?._id)
+                    store.setCurrentList(store.currentList?._id)
 
-                    // store.refreshCurrentPlaylist();
                     if (response.data.success) {
                         storeReducer({
                             type: GlobalStoreActionType.EDIT_MARKED_SONG,
@@ -586,6 +586,9 @@ export const useGlobalStore = () => {
         let transaction = new DeleteSong_Transaction(store, index, payload, length);
         tps.addTransaction(transaction);
     }
+    store.addEditSongTransaction = function(index, oldInfo, newInfo) {
+        let transaction = new EditSong_Transaction(store, index, oldInfo, newInfo);
+        tps.addTransaction(transaction);    }
 
     store.getPlaylistSize = function() {
         return store.currentList.songs.length;
