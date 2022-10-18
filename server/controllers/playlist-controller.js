@@ -116,8 +116,6 @@ deletePlaylistById = async (req, res) => {
 
 // --- Song Section
 addSongToPlaylist = (req, res) => {
-    console.log("API---------------------")
-    console.log("Hi", req.body)
     Playlist.findOneAndUpdate({ _id: req.params.id}, {$addToSet: {songs: req.body}}, (err, success) => {
         console.log("Awesome") 
         if (err) {

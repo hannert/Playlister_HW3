@@ -175,7 +175,9 @@ export const useGlobalStore = () => {
                 console.log("Addign song...")
                 return setStore({
                     ...store,
-                    currentList: payload
+                    currentList: payload,
+                    editSongModalActive: false,
+                    deleteSongModalActive: false
                 });
             }
 
@@ -402,7 +404,38 @@ export const useGlobalStore = () => {
             return true;
         }
         console.log(store.currentList._id)
-        asyncAddSongToPlaylist(store.currentList._id);
+        return asyncAddSongToPlaylist(store.currentList._id);
+    }
+    store.addSongToPlaylistAtIndex = function (index, song) {
+        async function asyncAddSongToPlaylistAtIndex(id, index, song) {
+            let response = await api.getPlaylistById(id);
+            if (response.data.success) {
+                let playlist = response.data.playlist;
+                let songs = playlist.songs;
+                songs.splice(index, 0, song);
+                async function updateList(playlist) {
+                    console.log(playlist)
+                    response = await api.updatePlaylistById(id, playlist);
+                    if (response.data.success) {
+                        async function getListPairs(playlist) {
+                            response = await api.getPlaylistPairs();
+                            if (response.data.success) {
+                                storeReducer({
+                                    type: GlobalStoreActionType.ADD_SONG,
+                                    payload: playlist
+                                });
+                            }
+                        }
+                        getListPairs(playlist);
+                    }
+                    else {
+                        console.log("API FAILED TO ADD SONG")
+                    }
+                }
+                updateList(playlist);
+            }
+        }
+        asyncAddSongToPlaylistAtIndex(store.currentList?._id, index, song);
     }
 
     store.markSongForEdit = function (index) {
@@ -423,28 +456,27 @@ export const useGlobalStore = () => {
     }
 
     store.updateMarkedSong = function (payload, index = null) {
-        console.log('markedonsg', payload)
         async function asyncUpdateMarkedSong(id, payload, index) {
-            console.log(payload, store.currentList._id)
             let response = await api.getPlaylistById(id, index);
             if (response.data.success) {
                 let playlist = response.data.playlist;
                 playlist.songs[index] = payload;
                 async function updateList(playlist) {
-                    console.log(playlist)
                     response = await api.updatePlaylistById(id, playlist);
                     store.setCurrentList(store.currentList?._id)
-
                     if (response.data.success) {
                         storeReducer({
                             type: GlobalStoreActionType.EDIT_MARKED_SONG,
                             payload: {}
                         });
+                        return true
                     }
-                    return true
+                    return false
+                    
                 }
                 return updateList(playlist);
             }
+            return false
 
         }
         if  (index !== null ) {
@@ -508,7 +540,7 @@ export const useGlobalStore = () => {
 
     store.moveSong = function(start, end) {
         async function asyncMoveSong(start, end, listId) {
-            console.log( listId)
+            console.log(start, end, listId)
             let response = await api.getPlaylistById(listId);
             if (response.data.success) {
                 console.log("successfully found playlist")
@@ -554,23 +586,6 @@ export const useGlobalStore = () => {
         return asyncMoveSong(start, end, store.currentList?._id)
     }
 
-    // store.refreshCurrentPlaylist = function () {
-    //     console.log("Refreshing current playlist...")
-    //     async function asyncRefreshCurrentList(id) {
-    //         let response = await api.getPlaylistById(id);
-    //         if (response.data.success) {
-    //             let playlist = response.data.playlist;
-
-    //             if (response.data.success) {
-    //                 storeReducer({
-    //                     type: GlobalStoreActionType.SET_CURRENT_LIST,
-    //                     payload: playlist
-    //                 });
-    //             }
-    //         }        
-    //     }
-    //     asyncRefreshCurrentList(store.currentList?._id);
-    // }
 
     store.addMoveSongTransaction = function(start, end) {
         console.log("Adding Transaction")
@@ -608,21 +623,24 @@ export const useGlobalStore = () => {
     store.isDeleteSongModalActive = function() {
         return store.deleteSongModalActive;
     }
-
+    store.isSongModalActive = function() {
+        return (store.editSongModalActive || store.deleteSongModalActive)
+    }
     store.hasActionsToUndo = function() {
-        return tps.hasTransactionToUndo;
+        return tps.hasTransactionToUndo();
     }
     store.hasActionsToRedo = function() {
-        return tps.hasTransactionToRedo;
+        return tps.hasTransactionToRedo();
     }
 
     store.undo = function () {
-        if(tps.hasTransactionToUndo())
+        if(tps.hasTransactionToUndo()){
             tps.undoTransaction();
+        }
+            
     }
     store.redo = function () {
         if(tps.hasTransactionToRedo()){
-            console.log("redo")
             tps.doTransaction();
         }
             

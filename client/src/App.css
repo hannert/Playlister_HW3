@@ -94,6 +94,7 @@ body {
   border-radius: 5px;
 }
 
+
 .playlister-button:hover {
   cursor: pointer;
   color:black;
@@ -102,6 +103,7 @@ body {
 .playlister-button-disabled {
   opacity: 0.25; 
   cursor: not-allowed;
+  pointer-events: none;
 }
 
 #playlister-statusbar {
